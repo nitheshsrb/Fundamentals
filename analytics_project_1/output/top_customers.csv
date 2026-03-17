@@ -1,0 +1,4 @@
+customer_id,total_spend,number_of_purchases,avg_order_value
+2,140,2,70.0
+5,120,1,120.0
+1,80,2,40.0

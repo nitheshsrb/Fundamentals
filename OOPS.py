@@ -50,5 +50,15 @@ class Titanic:
     def map_gender(self, df):   
         new_df = df.copy()
         new_df['Sex'] = new_df['Sex'].map({'male':0,'female':1})
+        new_df['CryoSleep'] = new_df['CryoSleep'].map({'False':0, 'True': 1})
+        new_df['VIP'] = new_df['VIP'].map({'False': 0, 'True': 1})
         return new_df
+    
+    def feature_eng(self, df):
+        new_df = df.copy()
+        dtype_dict = {c : type(c)} for c in df.columns
+        columns = ['Cabin','HomePlanet','Destination']
+        for c in columns:
+            new_df = pd.get_dummies(new_df,columns=c, prefix=c)
+
     

@@ -1,0 +1,5 @@
+numpy;
+pandas;
+scikit-learn
+openmeteo-requests
+requests-cache retry-requests

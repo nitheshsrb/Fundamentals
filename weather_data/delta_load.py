@@ -1,9 +1,28 @@
-import openmeteo_requests
-
+import os
 import pandas as pd
-import requests_cache
-from retry_requests import retry
 from datetime import datetime
+from load_data import load_data
 
 def delta_load():
-    end_date = datetime.today().strftime('%Y-%m-%d')
+    
+    path = "weather_data/data/"
+    #Setting end date as today
+    if os.path.exists(path + "full_data.csv") == True:
+        temp_df = pd.read_csv(path + "full_data.csv") 
+    else:
+        temp_df = pd.read_csv(path + "Baseline_data.csv")
+    
+    temp_df['date'] = pd.to_datetime(temp_df['date'])
+    start_date = pd.to_datetime(temp_df['date'].max() + pd.DateOffset(days = 1)).date()
+    end_date = pd.Timestamp.today().date()
+    # Calling the load function for delta time period
+    delta_df = load_data(start_date,end_date,"actuals")
+    delta_df.sort_values(by='date',ascending = False)
+
+    return delta_df
+
+if __name__ == "__main__":
+
+    delta_df = delta_load()
+    delta_df.to_csv("weather_data/data/Delta_load.csv")
+    print("\n Successfully loaded the newest data")

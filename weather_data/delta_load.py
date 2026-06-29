@@ -7,10 +7,7 @@ def delta_load():
     
     path = "weather_data/data/"
     #Setting end date as today
-    if os.path.exists(path + "full_data.csv") == True:
-        temp_df = pd.read_csv(path + "full_data.csv") 
-    else:
-        temp_df = pd.read_csv(path + "Baseline_data.csv")
+    temp_df = pd.read_csv(path + "Baseline_data.csv")
     
     temp_df['date'] = pd.to_datetime(temp_df['date'])
     start_date = pd.to_datetime(temp_df['date'].max() + pd.DateOffset(days = 1)).date()

@@ -6,7 +6,4 @@ def data_prep():
     full_data = pd.concat([df,delta_df])
     return full_data
 
-if __name__ == "__main__":
 
-    final_df = data_prep()
-    final_df.to_csv('weather_data/data/full_data.csv')

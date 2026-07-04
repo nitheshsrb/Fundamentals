@@ -41,10 +41,8 @@ def evaluation(df):
     print('Results are : ',Results)
 
 
-if __name__ == "__main__":
 
-    df = pd.read_csv('weather_data/data/Feature_engineered_data.csv')
-    evaluation(df)
+    
 
 
 

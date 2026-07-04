@@ -17,9 +17,3 @@ def delta_load():
     delta_df.sort_values(by='date',ascending = False)
 
     return delta_df
-
-if __name__ == "__main__":
-
-    delta_df = delta_load()
-    delta_df.to_csv("weather_data/data/Delta_load.csv")
-    print("\n Successfully loaded the newest data")

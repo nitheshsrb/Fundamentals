@@ -96,6 +96,7 @@ def load_data (start_date, end_date,load_type):
 			)
 		}
 
+		daily_data['date'] = pd.to_datetime(daily_data['date']).date
 		daily_data["temperature_2m_max"] = daily_temperature_2m_max
 		daily_data["dew_point_2m_mean"] = daily_dew_point_2m_mean
 		daily_data["et0_fao_evapotranspiration_sum"] = daily_et0_fao_evapotranspiration_sum

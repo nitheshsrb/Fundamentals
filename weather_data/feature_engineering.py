@@ -9,9 +9,4 @@ def feature_engineering(df):
 
     return df
 
-if __name__ == "__main__":
 
-    df = pd.read_csv('weather_data/data/full_data.csv')
-    final_df = feature_engineering(df)
-    print("Successfully loaded the data ")
-    final_df.to_csv('weather_data/data/Feature_engineered_data.csv')

@@ -42,9 +42,3 @@ def train_baseline_pipeline(df):
     #print(res.summary())
     #else:
     #    pass
-    
-
-if __name__ == "__main__":
-
-    df = pd.read_csv('weather_data/data/Feature_engineered_data.csv')
-    train_baseline_pipeline(df)

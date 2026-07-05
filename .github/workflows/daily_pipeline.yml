@@ -31,6 +31,6 @@ jobs:
       - name : Commit latest changes
         run: git config user.name = "github-actions"
              git config user.email = "actions@github.com"
-             git add data/ models/ test_models/
+             git add weather_data/data/ weather_data/models/ weather_data/models/test_models/
              git commit -m "Daily commit of new data" || echo "Nothing to commit"
              git push

@@ -11,7 +11,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: ./weather_data   # All steps run here
+        working-directory: ./   # All steps run here
 
     steps:
       - name: Checkout repo
@@ -26,7 +26,7 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Run pipeline
-        run: python main.py
+        run: python weather_data/main.py
 
       - name: Commit updated outputs
         run: |

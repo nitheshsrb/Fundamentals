@@ -34,6 +34,7 @@ def predict(days):
 
     prediction_data['Error in prediction and forecast'] = (prediction_data['Forecasts'] - prediction_data['Predictions']).round(0)
 
+    #WRITING
     prediction_data.to_csv('weather_data/data/Predictions.csv')
 
     return prediction_data

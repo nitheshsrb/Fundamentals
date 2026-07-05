@@ -27,3 +27,10 @@ jobs:
 
       - name: Run pipeline
         run: python weather_data/main.py
+      
+      - name : Commit latest changes
+        run: git config user.name = "github-actions"
+             git config user.email = "actions@github.com"
+             git add data/ models/ test_models/
+             git commit -m "Daily commit of new data" || echo "Nothing to commit"
+             git push

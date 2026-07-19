@@ -13,5 +13,5 @@ df = load_data(start_date,end_date,"actuals")
 print("\nSuccesfully loaded daily weather data\n", df.head(5))
 
 # Creating the full dataset
-df.to_csv('weather_data/data/Baseline_data.csv')
+df.to_csv('weather_data/data/Baseline_data.csv',index = False)
 print("\n Data written to destination successfully ")

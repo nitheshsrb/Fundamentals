@@ -6,7 +6,7 @@ on:
   workflow_dispatch:             # Lets you manually trigger from GitHub UI
 
 permissions:
-  contents: write    # ← This is the fix
+  contents: write
 
 jobs:
   run-pipeline:

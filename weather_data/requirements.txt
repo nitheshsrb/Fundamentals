@@ -5,4 +5,4 @@ openmeteo-requests
 requests-cache 
 retry-requests
 statsmodels
-streamlit
+streamlit==1.46.1

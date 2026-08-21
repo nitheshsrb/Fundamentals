@@ -33,7 +33,7 @@ cols = st.columns(7)
 
 for i, (_, row) in enumerate(df.iterrows()):
     temp = row['Optimized Predictions']
-    interval = row['95 Interval limit']
+    interval = row['95 Interval Limit']
     icon, label = weather_icon(temp)
 
     with cols[i % 7]:

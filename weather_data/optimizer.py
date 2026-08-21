@@ -14,10 +14,11 @@ def optimization(Results):
     if statistic_test.pvalue > 0.05:
         print('The residual distribution is normal with mean',statistic_test.statistic_location)
     
-    Results['Binned Actuals'], bin_edges = pd.qcut(Results['Actuals'],q = [0.05,0.4,0.75,0.95],retbins = True)
-
+    bin_edges = np.quantile(Results['Actuals'],[0.05,0.4,0.75,0.95])
     bin_edges = np.insert(bin_edges,0,-np.inf)
     bin_edges = np.insert(bin_edges,len(bin_edges), np.inf)
+
+    Results['Binned Actuals'] = pd.cut(Results['Actuals'],bins = bin_edges, include_lowest = True)
 
     error_model = LinearRegression()
     error_model.fit(Results['Actuals'].values.reshape(-1,1),Results['Residual'])

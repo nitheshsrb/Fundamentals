@@ -1,6 +1,7 @@
 numpy
 pandas
 scikit-learn
+scipy
 openmeteo-requests
 requests-cache 
 retry-requests

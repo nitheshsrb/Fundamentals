@@ -9,6 +9,7 @@ from data_prep import data_prep
 from feature_engineering import feature_engineering
 from train_pipeline import train_baseline_pipeline
 from model_metric import evaluation
+from optimizer import optimization
 from predict import predict
 
 delta_df = delta_load()
@@ -25,9 +26,11 @@ print("Successfully loaded the data ")
 df.to_csv('weather_data/data/Feature_engineered_data.csv',index = False)
 
 train_baseline_pipeline(df)
-evaluation(df)
 
-predictions = predict(14)
+results = evaluation(df)
+results,beta0,beta1,bin_edges = optimization(results)
+print("Successfully applied optimization")
+predictions = predict(14,results,bin_edges,beta0,beta1)
 
 if os.path.exists('weather_data/data/Historic_predictions.csv'):
     hist_preds = pd.read_csv('weather_data/data/Historic_predictions.csv')

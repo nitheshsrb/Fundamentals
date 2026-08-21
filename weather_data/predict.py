@@ -2,8 +2,10 @@ import pandas as pd
 import joblib
 from load_data import load_data
 from feature_engineering import feature_engineering
+from model_metric import evaluation
+from optimizer import optimization
 
-def predict(days):
+def predict(days,Results,bin_edges,beta0,beta1):
 
     forecast_start = pd.to_datetime('today').date()
     
@@ -24,9 +26,17 @@ def predict(days):
 
     print("Data for prediction : ",prediction_data.head(5))
 
+    std_dev_df = Results.groupby('Binned Actuals')['Residual'].std().reset_index()
+
     results = model.predict(prediction_data)
 
     prediction_data['Predictions'] = results.reset_index(drop=True).round()
+
+    prediction_data['Optimized Predictions'] = prediction_data['Predictions'] + (beta0 + (beta1*Results['Predictions']))
+
+    prediction_data['Binned Predictions'] = pd.cut(prediction_data['Predictions'],bins = bin_edges,labels = False,include_lowest = True)
+
+    prediction_data['95 Interval limit'] = prediction_data['Binned Predictions'].map(std_dev_df['Residual'])
 
     prediction_data['Forecasts'] = forecast_df['temperature_2m_max'].reset_index(drop=True).round()
 
@@ -40,6 +50,7 @@ def predict(days):
     prediction_data.to_csv('weather_data/data/Predictions.csv',index = False)
 
     return prediction_data
+
 
 
     

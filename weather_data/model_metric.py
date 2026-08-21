@@ -40,6 +40,8 @@ def evaluation(df):
 
     print('Results are : ',Results)
 
+    return Results
+
 
 
     

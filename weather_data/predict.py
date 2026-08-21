@@ -36,7 +36,7 @@ def predict(days,Results,bin_edges,beta0,beta1):
 
     prediction_data['Binned Predictions'] = pd.cut(prediction_data['Predictions'],bins = bin_edges,labels = False,include_lowest = True)
 
-    prediction_data['95 Interval limit'] = prediction_data['Binned Predictions'].map(std_dev_df['Residual'])
+    prediction_data['95 Interval Limit'] = prediction_data['Binned Predictions'].map(std_dev_df['Residual'])
 
     prediction_data['Forecasts'] = forecast_df['temperature_2m_max'].reset_index(drop=True).round()
 

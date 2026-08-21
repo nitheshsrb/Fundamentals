@@ -16,8 +16,11 @@ def optimization(Results):
     
     Results['Binned Actuals'], bin_edges = pd.qcut(Results['Actuals'],q = [0.05,0.4,0.75,0.95],retbins = True)
 
+    bin_edges = np.insert(bin_edges,0,-np.inf)
+    bin_edges = np.insert(bin_edges,len(bin_edges), np.inf)
+
     error_model = LinearRegression()
-    error_model.fit(Results['Predictions'].values.reshape(-1,1),Results['Residual'])
+    error_model.fit(Results['Actuals'].values.reshape(-1,1),Results['Residual'])
 
     beta0 = error_model.intercept_
     beta1 = error_model.coef_[0]

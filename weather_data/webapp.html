@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>London — 14 Day Forecast</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<style>
+  :root{
+    --day-sky-top:#2E86D6;
+    --day-sky-mid:#6FC3E8;
+    --day-sky-low:#FFD98E;
+    --night-sky-top:#0B1330;
+    --night-sky-mid:#1C1740;
+    --night-sky-low:#2E2154;
+    --ink:#151321;
+    --paper:#F7F5F2;
+    --card:rgba(255,255,255,0.86);
+    --card-border:rgba(255,255,255,0.6);
+    --amber:#E68A2E;
+    --lavender:#8B7FD6;
+    --much-warm:#D9622B;
+    --warm:#E8A23A;
+    --typical:#5B8A72;
+    --cool:#4C86B0;
+    --much-cool:#3E5C99;
+    --transition-sky: background 1.2s ease;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:'Inter',system-ui,sans-serif;
+    background:var(--paper);
+    color:var(--ink);
+    min-height:100vh;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important;}
+  }
+
+  /* ---------- HERO / SKY CLOCK ---------- */
+  .hero{
+    position:relative;
+    overflow:hidden;
+    padding:2.5rem 1.5rem 5rem;
+    min-height:280px;
+    transition:var(--transition-sky);
+  }
+  .hero.is-day{
+    background:linear-gradient(180deg, var(--day-sky-top) 0%, var(--day-sky-mid) 55%, var(--day-sky-low) 100%);
+  }
+  .hero.is-night{
+    background:linear-gradient(180deg, var(--night-sky-top) 0%, var(--night-sky-mid) 55%, var(--night-sky-low) 100%);
+  }
+  .hero-inner{
+    position:relative;
+    z-index:3;
+    max-width:1100px;
+    margin:0 auto;
+  }
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace;
+    font-size:0.78rem;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:rgba(255,255,255,0.85);
+    margin:0 0 0.6rem;
+  }
+  h1{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:clamp(2.1rem, 5vw, 3.4rem);
+    line-height:1.02;
+    margin:0 0 0.5rem;
+    color:#fff;
+    text-shadow:0 2px 18px rgba(0,0,0,0.18);
+  }
+  .hero-sub{
+    font-size:1rem;
+    color:rgba(255,255,255,0.92);
+    margin:0;
+    max-width:38ch;
+  }
+  .sky-track{
+    position:absolute;
+    left:0; right:0; top:0; bottom:0;
+    z-index:1;
+    pointer-events:none;
+  }
+  .celestial{
+    position:absolute;
+    width:54px; height:54px;
+    border-radius:50%;
+    transform:translate(-50%,-50%);
+    transition:left 1.2s ease, top 1.2s ease;
+  }
+  .celestial.sun{
+    background:radial-gradient(circle at 35% 30%, #FFF3D6, #FFC857 55%, #F2A73B 100%);
+    box-shadow:0 0 60px 18px rgba(255,200,110,0.55);
+  }
+  .celestial.moon{
+    background:radial-gradient(circle at 38% 32%, #F5F3FF, #D9D4F0 60%, #B8AEDE 100%);
+    box-shadow:0 0 34px 10px rgba(200,190,240,0.4);
+  }
+  .stars{
+    position:absolute; inset:0; z-index:0;
+    opacity:0; transition:opacity 1s ease;
+  }
+  .stars.show{opacity:1;}
+  .star{
+    position:absolute;
+    width:2px; height:2px;
+    background:#fff;
+    border-radius:50%;
+    animation:twinkle 3.2s ease-in-out infinite;
+  }
+  @keyframes twinkle{
+    0%,100%{opacity:0.25;}
+    50%{opacity:0.95;}
+  }
+  .horizon-note{
+    font-family:'JetBrains Mono',monospace;
+    font-size:0.78rem;
+    color:rgba(255,255,255,0.85);
+    margin-top:1.2rem;
+  }
+
+  /* ---------- MAIN ---------- */
+  main{
+    max-width:1100px;
+    margin:-2.5rem auto 0;
+    padding:0 1.5rem 4rem;
+    position:relative;
+    z-index:4;
+  }
+  section{margin-bottom:2.75rem;}
+  .section-title{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:1.35rem;
+    margin:0 0 1rem;
+  }
+  #status{
+    font-family:'JetBrains Mono',monospace;
+    font-size:0.85rem;
+    color:#6b6878;
+    padding:1rem 0;
+  }
+  #status.error{
+    color:#B3401F;
+    background:#FDECE6;
+    border:1px solid #F3C7B6;
+    border-radius:10px;
+    padding:1rem;
+  }
+
+  .day-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(150px,1fr));
+    gap:0.9rem;
+  }
+  .day-card{
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-radius:16px;
+    padding:1.1rem 1rem;
+    text-align:left;
+    cursor:pointer;
+    box-shadow:0 8px 24px rgba(20,15,40,0.08);
+    transition:transform 0.18s ease, box-shadow 0.18s ease;
+    font-family:inherit;
+    color:var(--ink);
+    display:flex;
+    flex-direction:column;
+    gap:0.55rem;
+  }
+  .day-card:hover, .day-card:focus-visible{
+    transform:translateY(-3px);
+    box-shadow:0 14px 32px rgba(20,15,40,0.14);
+    outline:none;
+  }
+  .day-card:focus-visible{
+    outline:2px solid var(--amber);
+    outline-offset:2px;
+  }
+  .day-name{
+    font-family:'JetBrains Mono',monospace;
+    font-size:0.72rem;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:#6b6878;
+  }
+  .day-date{
+    font-size:0.92rem;
+    font-weight:600;
+    margin-top:-0.3rem;
+  }
+  .day-temp{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:2rem;
+    line-height:1;
+  }
+  .day-range{
+    font-family:'JetBrains Mono',monospace;
+    font-size:0.72rem;
+    color:#6b6878;
+  }
+  .prep-badge{
+    font-size:0.72rem;
+    font-weight:600;
+    padding:0.28rem 0.55rem;
+    border-radius:999px;
+    display:inline-flex;
+    align-items:center;
+    gap:0.35rem;
+    width:fit-content;
+  }
+  .prep-badge::before{
+    content:'';
+    width:8px; height:8px;
+    border-radius:50%;
+    background:currentColor;
+  }
+  .cat-much-warm{color:var(--much-warm); background:rgba(217,98,43,0.12);}
+  .cat-warm{color:var(--warm); background:rgba(232,162,58,0.14);}
+  .cat-typical{color:var(--typical); background:rgba(91,138,114,0.14);}
+  .cat-cool{color:var(--cool); background:rgba(76,134,176,0.14);}
+  .cat-much-cool{color:var(--much-cool); background:rgba(62,92,153,0.14);}
+
+  /* ---------- CHART ---------- */
+  .chart-panel{
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-radius:16px;
+    padding:1.4rem;
+    box-shadow:0 8px 24px rgba(20,15,40,0.08);
+  }
+  .chart-wrap{position:relative; height:320px;}
+
+  /* ---------- MODAL ---------- */
+  .modal-backdrop{
+    position:fixed; inset:0;
+    background:rgba(10,8,20,0.55);
+    display:none;
+    align-items:center;
+    justify-content:center;
+    padding:1.5rem;
+    z-index:50;
+  }
+  .modal-backdrop.open{display:flex;}
+  .modal{
+    background:#fff;
+    border-radius:18px;
+    max-width:420px;
+    width:100%;
+    padding:1.8rem;
+    position:relative;
+    box-shadow:0 24px 60px rgba(0,0,0,0.3);
+  }
+  .modal h2{
+    font-family:'Fraunces',serif;
+    font-weight:600;
+    font-size:1.5rem;
+    margin:0 0 0.2rem;
+  }
+  .modal .modal-date{
+    font-family:'JetBrains Mono',monospace;
+    font-size:0.78rem;
+    color:#6b6878;
+    margin-bottom:1.1rem;
+  }
+  .modal-temp{
+    font-family:'Fraunces',serif;
+    font-size:3rem;
+    font-weight:600;
+    margin:0;
+  }
+  .modal-range{
+    font-family:'JetBrains Mono',monospace;
+    font-size:0.85rem;
+    color:#6b6878;
+    margin:0.2rem 0 1.2rem;
+  }
+  .modal-tip{
+    font-size:0.95rem;
+    line-height:1.5;
+    background:#F7F5F2;
+    border-radius:12px;
+    padding:1rem;
+    margin-top:0.5rem;
+  }
+  .modal-close{
+    position:absolute;
+    top:1.2rem; right:1.2rem;
+    background:none;
+    border:none;
+    font-size:1.3rem;
+    line-height:1;
+    cursor:pointer;
+    color:#6b6878;
+    padding:0.3rem;
+  }
+  .modal-close:focus-visible{outline:2px solid var(--amber); border-radius:6px;}
+
+  footer{
+    text-align:center;
+    font-family:'JetBrains Mono',monospace;
+    font-size:0.72rem;
+    color:#9a97a5;
+    padding:1.5rem;
+  }
+</style>
+</head>
+<body>
+
+<div class="hero" id="hero">
+  <div class="sky-track">
+    <div class="stars" id="stars"></div>
+    <div class="celestial" id="celestial"></div>
+  </div>
+  <div class="hero-inner">
+    <p class="eyebrow">London, UK</p>
+    <h1>14&#8209;Day Forecast</h1>
+    <p class="hero-sub">Model predictions for London's daily high, pulled straight from the forecasting file.</p>
+    <p class="horizon-note" id="clock"></p>
+  </div>
+</div>
+
+<main>
+  <section>
+    <h2 class="section-title">The next two weeks</h2>
+    <div id="status">Loading predictions…</div>
+    <div class="day-grid" id="dayGrid"></div>
+  </section>
+
+  <section id="chartSection" style="display:none;">
+    <h2 class="section-title">Temperature over time</h2>
+    <div class="chart-panel">
+      <div class="chart-wrap">
+        <canvas id="tempChart"></canvas>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>Predictions sourced from GitHub &middot; nitheshsrb/Fundamentals</footer>
+
+<div class="modal-backdrop" id="modalBackdrop">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <button class="modal-close" id="modalClose" aria-label="Close">&times;</button>
+    <h2 id="modalTitle"></h2>
+    <p class="modal-date" id="modalDate"></p>
+    <p class="modal-temp" id="modalTemp"></p>
+    <p class="modal-range" id="modalRange"></p>
+    <div class="modal-tip" id="modalTip"></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+
+  // ---------- CONFIG ----------
+  var DATA_URL = "https://raw.githubusercontent.com/nitheshsrb/Fundamentals/main/weather_data/data/Predictions.csv";
+  var MAX_DAYS = 14;
+
+  var SEASONAL_AVG_MAX_C = {
+    1:8, 2:8, 3:11, 4:14, 5:18, 6:21,
+    7:23, 8:23, 9:20, 10:15, 11:11, 12:8
+  };
+
+  var CATEGORIES = [
+    { key:"much-warm", label:"Much Warmer Than Usual", tip:"Light clothing and sun protection recommended.", min:5 },
+    { key:"warm",       label:"Warmer Than Usual",       tip:"Light layers should be enough.", min:2 },
+    { key:"typical",    label:"Typical for the Season",  tip:"Dress as usual for this time of year in London.", min:-2 },
+    { key:"cool",       label:"Cooler Than Usual",       tip:"Bring an extra layer or a light coat.", min:-5 },
+    { key:"much-cool",  label:"Much Colder Than Usual",  tip:"Coat, hat, and gloves advised.", min:-Infinity }
+  ];
+
+  function categorize(diff){
+    for (var i=0;i<CATEGORIES.length;i++){
+      if (diff >= CATEGORIES[i].min) return CATEGORIES[i];
+    }
+    return CATEGORIES[CATEGORIES.length-1];
+  }
+
+  // ---------- LONDON TIME HELPERS ----------
+  function getLondonParts(){
+    var fmt = new Intl.DateTimeFormat('en-GB', {
+      timeZone:'Europe/London',
+      year:'numeric', month:'2-digit', day:'2-digit',
+      hour:'2-digit', minute:'2-digit', hour12:false
+    });
+    var parts = {};
+    fmt.formatToParts(new Date()).forEach(function(p){ parts[p.type]=p.value; });
+    return {
+      year:+parts.year, month:+parts.month, day:+parts.day,
+      hour:+parts.hour, minute:+parts.minute
+    };
+  }
+
+  function londonDateString(p){
+    function pad(n){ return n<10 ? "0"+n : ""+n; }
+    return p.year + "-" + pad(p.month) + "-" + pad(p.day);
+  }
+
+  // ---------- SKY CLOCK ----------
+  function renderSky(){
+    var p = getLondonParts();
+    var hour = p.hour + p.minute/60;
+    var hero = document.getElementById('hero');
+    var celestial = document.getElementById('celestial');
+    var stars = document.getElementById('stars');
+    var clock = document.getElementById('clock');
+
+    var isDay = hour >= 6 && hour < 20;
+    hero.className = 'hero ' + (isDay ? 'is-day' : 'is-night');
+    stars.className = 'stars' + (isDay ? '' : ' show');
+
+    // Map current time within its half of the day to a left(%)/top(%) arc position
+    var span, progress;
+    if (isDay){
+      span = 14; // 6am - 8pm
+      progress = (hour - 6) / span;
+      celestial.className = 'celestial sun';
+    } else {
+      span = 10; // 8pm - 6am (wraps midnight)
+      var hoursSince8pm = hour >= 20 ? (hour - 20) : (hour + 4);
+      progress = hoursSince8pm / span;
+      celestial.className = 'celestial moon';
+    }
+    progress = Math.max(0, Math.min(1, progress));
+    var left = 8 + progress * 84; // percent across
+    var arcHeight = Math.sin(progress * Math.PI); // 0 -> 1 -> 0
+    var top = 78 - arcHeight * 58; // percent down from top of hero
+    celestial.style.left = left + '%';
+    celestial.style.top = top + '%';
+
+    if (stars.children.length === 0){
+      for (var i=0;i<40;i++){
+        var s = document.createElement('div');
+        s.className = 'star';
+        s.style.left = (Math.random()*100) + '%';
+        s.style.top = (Math.random()*70) + '%';
+        s.style.animationDelay = (Math.random()*3) + 's';
+        stars.appendChild(s);
+      }
+    }
+
+    var timeLabel = (p.hour<10?'0':'')+p.hour + ':' + (p.minute<10?'0':'')+p.minute;
+    clock.textContent = (isDay ? 'Daytime' : 'Nighttime') + ' in London · ' + timeLabel;
+  }
+
+  // ---------- DATA LOADING ----------
+  function loadData(){
+    Papa.parse(DATA_URL, {
+      download:true,
+      header:true,
+      skipEmptyLines:true,
+      complete:function(results){
+        try{
+          processRows(results.data);
+        }catch(e){
+          showError("Something went wrong reading the forecast data. (" + e.message + ")");
+        }
+      },
+      error:function(err){
+        showError("Couldn't load the forecast file from GitHub. Please check the file is still public and try again.");
+      }
+    });
+  }
+
+  function showError(msg){
+    var status = document.getElementById('status');
+    status.textContent = msg;
+    status.className = 'error';
+  }
+
+  function processRows(rows){
+    var today = londonDateString(getLondonParts());
+    var skipped = 0;
+    var days = [];
+
+    rows.forEach(function(row){
+      var date = row['date'];
+      var opt = row['Optimized Predictions'];
+      var interval = row['95 Interval Limit'];
+
+      if (!date || opt === undefined || opt === '' || interval === undefined || interval === ''){
+        skipped++; return;
+      }
+      var optNum = parseFloat(opt);
+      var intervalNum = parseFloat(interval);
+      if (isNaN(optNum) || isNaN(intervalNum)){
+        skipped++; return;
+      }
+      if (date < today) return; // past day, not an error, just not upcoming
+
+      days.push({
+        date: date,
+        displayTemp: Math.round(optNum*10)/10,
+        rangeLow: Math.round((optNum-intervalNum)*10)/10,
+        rangeHigh: Math.round((optNum+intervalNum)*10)/10
+      });
+    });
+
+    days.sort(function(a,b){ return a.date < b.date ? -1 : 1; });
+    days = days.slice(0, MAX_DAYS);
+
+    var status = document.getElementById('status');
+    if (days.length === 0){
+      showError("No upcoming forecast days were found in the data file.");
+      return;
+    }
+    status.style.display = 'none';
+    if (skipped > 0){
+      var note = document.createElement('div');
+      note.id = 'status';
+      note.textContent = skipped + ' row(s) skipped due to incomplete data.';
+      note.style.cssText = "font-family:'JetBrains Mono',monospace;font-size:0.78rem;color:#9a97a5;padding-bottom:0.75rem;";
+      status.parentNode.insertBefore(note, status);
+    }
+
+    renderDayGrid(days);
+    renderChart(days);
+  }
+
+  // ---------- RENDERING ----------
+  function formatDayName(dateStr){
+    var d = new Date(dateStr + 'T12:00:00Z');
+    return d.toLocaleDateString('en-GB', { weekday:'short', timeZone:'UTC' });
+  }
+  function formatDateShort(dateStr){
+    var d = new Date(dateStr + 'T12:00:00Z');
+    return d.toLocaleDateString('en-GB', { day:'numeric', month:'short', timeZone:'UTC' });
+  }
+
+  function renderDayGrid(days){
+    var grid = document.getElementById('dayGrid');
+    grid.innerHTML = '';
+    days.forEach(function(day){
+      var month = +day.date.slice(5,7);
+      var avg = SEASONAL_AVG_MAX_C[month];
+      var diff = day.displayTemp - avg;
+      var cat = categorize(diff);
+
+      var card = document.createElement('button');
+      card.className = 'day-card';
+      card.setAttribute('type','button');
+      card.innerHTML =
+        '<span class="day-name">' + formatDayName(day.date) + '</span>' +
+        '<span class="day-date">' + formatDateShort(day.date) + '</span>' +
+        '<span class="day-temp">' + day.displayTemp.toFixed(1) + '&deg;</span>' +
+        '<span class="day-range">' + day.rangeLow.toFixed(1) + '&deg; &ndash; ' + day.rangeHigh.toFixed(1) + '&deg;</span>' +
+        '<span class="prep-badge cat-' + cat.key + '">' + cat.label + '</span>';
+      card.addEventListener('click', function(){ openModal(day, cat); });
+      grid.appendChild(card);
+    });
+  }
+
+  function renderChart(days){
+    var section = document.getElementById('chartSection');
+    section.style.display = 'block';
+    var labels = days.map(function(d){ return formatDateShort(d.date); });
+    var mid = days.map(function(d){ return d.displayTemp; });
+    var low = days.map(function(d){ return d.rangeLow; });
+    var high = days.map(function(d){ return d.rangeHigh; });
+
+    var ctx = document.getElementById('tempChart').getContext('2d');
+    new Chart(ctx, {
+      type:'line',
+      data:{
+        labels:labels,
+        datasets:[
+          {
+            label:'Range high',
+            data:high,
+            borderColor:'transparent',
+            backgroundColor:'rgba(139,127,214,0.16)',
+            pointRadius:0,
+            fill:'+1',
+            tension:0.3,
+            order:3
+          },
+          {
+            label:'Range low',
+            data:low,
+            borderColor:'transparent',
+            backgroundColor:'rgba(139,127,214,0.16)',
+            pointRadius:0,
+            fill:false,
+            tension:0.3,
+            order:3
+          },
+          {
+            label:'Predicted max (°C)',
+            data:mid,
+            borderColor:'#E68A2E',
+            backgroundColor:'#E68A2E',
+            pointRadius:4,
+            pointHoverRadius:6,
+            tension:0.3,
+            fill:false,
+            order:1
+          }
+        ]
+      },
+      options:{
+        responsive:true,
+        maintainAspectRatio:false,
+        interaction:{ mode:'index', intersect:false },
+        plugins:{
+          legend:{ display:false },
+          tooltip:{
+            callbacks:{
+              title:function(items){ return days[items[0].dataIndex].date; },
+              label:function(item){
+                var d = days[item.dataIndex];
+                if (item.dataset.label === 'Predicted max (°C)'){
+                  return 'Predicted: ' + d.displayTemp.toFixed(1) + '°C (range ' + d.rangeLow.toFixed(1) + '–' + d.rangeHigh.toFixed(1) + '°C)';
+                }
+                return null;
+              },
+              filter:function(item){ return item.dataset.label === 'Predicted max (°C)'; }
+            }
+          }
+        },
+        scales:{
+          y:{
+            title:{ display:true, text:'°C' },
+            grid:{ color:'rgba(20,15,40,0.06)' }
+          },
+          x:{
+            grid:{ display:false }
+          }
+        }
+      }
+    });
+  }
+
+  // ---------- MODAL ----------
+  var lastFocused = null;
+  function openModal(day, cat){
+    lastFocused = document.activeElement;
+    document.getElementById('modalTitle').textContent = formatDayName(day.date) + ', ' + formatDateShort(day.date);
+    document.getElementById('modalDate').textContent = day.date;
+    document.getElementById('modalTemp').textContent = day.displayTemp.toFixed(1) + '°C';
+    document.getElementById('modalRange').textContent = 'Likely range: ' + day.rangeLow.toFixed(1) + '°C – ' + day.rangeHigh.toFixed(1) + '°C';
+    var tipEl = document.getElementById('modalTip');
+    tipEl.innerHTML = '<strong>' + cat.label + '.</strong> ' + cat.tip;
+    var backdrop = document.getElementById('modalBackdrop');
+    backdrop.classList.add('open');
+    document.getElementById('modalClose').focus();
+    document.addEventListener('keydown', onModalKeydown);
+  }
+  function closeModal(){
+    document.getElementById('modalBackdrop').classList.remove('open');
+    document.removeEventListener('keydown', onModalKeydown);
+    if (lastFocused) lastFocused.focus();
+  }
+  function onModalKeydown(e){
+    if (e.key === 'Escape') closeModal();
+  }
+  document.getElementById('modalClose').addEventListener('click', closeModal);
+  document.getElementById('modalBackdrop').addEventListener('click', function(e){
+    if (e.target === this) closeModal();
+  });
+
+  // ---------- INIT ----------
+  renderSky();
+  setInterval(renderSky, 60000);
+  loadData();
+})();
+</script>
+</body>
+</html>

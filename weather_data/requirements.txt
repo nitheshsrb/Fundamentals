@@ -7,3 +7,4 @@ requests-cache
 retry-requests
 statsmodels
 streamlit==1.46.1
+plotly

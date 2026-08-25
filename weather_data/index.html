@@ -7,8 +7,8 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 <style>
   :root{
     --day-sky-top:#2E86D6;
@@ -34,9 +34,18 @@
   html,body{margin:0;padding:0;}
   body{
     font-family:'Inter',system-ui,sans-serif;
-    background:var(--paper);
     color:var(--ink);
     min-height:100vh;
+    background-attachment:fixed;
+    background-size:cover;
+    background-repeat:no-repeat;
+    transition:var(--transition-sky);
+  }
+  body.is-day{
+    background-image:linear-gradient(180deg, var(--day-sky-top) 0%, var(--day-sky-mid) 45%, var(--day-sky-low) 100%);
+  }
+  body.is-night{
+    background-image:linear-gradient(180deg, var(--night-sky-top) 0%, var(--night-sky-mid) 45%, var(--night-sky-low) 100%);
   }
   @media (prefers-reduced-motion: reduce){
     *{animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important;}
@@ -48,13 +57,6 @@
     overflow:hidden;
     padding:2.5rem 1.5rem 5rem;
     min-height:280px;
-    transition:var(--transition-sky);
-  }
-  .hero.is-day{
-    background:linear-gradient(180deg, var(--day-sky-top) 0%, var(--day-sky-mid) 55%, var(--day-sky-low) 100%);
-  }
-  .hero.is-night{
-    background:linear-gradient(180deg, var(--night-sky-top) 0%, var(--night-sky-mid) 55%, var(--night-sky-low) 100%);
   }
   .hero-inner{
     position:relative;
@@ -143,11 +145,14 @@
     font-weight:600;
     font-size:1.35rem;
     margin:0 0 1rem;
+    color:#fff;
+    text-shadow:0 2px 12px rgba(0,0,0,0.22);
   }
   #status{
     font-family:'JetBrains Mono',monospace;
     font-size:0.85rem;
-    color:#6b6878;
+    color:rgba(255,255,255,0.88);
+    text-shadow:0 1px 8px rgba(0,0,0,0.18);
     padding:1rem 0;
   }
   #status.error{
@@ -311,7 +316,8 @@
     text-align:center;
     font-family:'JetBrains Mono',monospace;
     font-size:0.72rem;
-    color:#9a97a5;
+    color:rgba(255,255,255,0.7);
+    text-shadow:0 1px 8px rgba(0,0,0,0.18);
     padding:1.5rem;
   }
 </style>
@@ -413,13 +419,12 @@
   function renderSky(){
     var p = getLondonParts();
     var hour = p.hour + p.minute/60;
-    var hero = document.getElementById('hero');
     var celestial = document.getElementById('celestial');
     var stars = document.getElementById('stars');
     var clock = document.getElementById('clock');
 
     var isDay = hour >= 6 && hour < 20;
-    hero.className = 'hero ' + (isDay ? 'is-day' : 'is-night');
+    document.body.className = isDay ? 'is-day' : 'is-night';
     stars.className = 'stars' + (isDay ? '' : ' show');
 
     // Map current time within its half of the day to a left(%)/top(%) arc position
@@ -566,6 +571,13 @@
   function renderChart(days){
     var section = document.getElementById('chartSection');
     section.style.display = 'block';
+
+    if (typeof Chart === 'undefined'){
+      document.querySelector('.chart-panel').innerHTML =
+        '<p style="font-family:\'JetBrains Mono\',monospace;font-size:0.85rem;color:#B3401F;">' +
+        'Chart library failed to load — check your internet connection and refresh.</p>';
+      return;
+    }
     var labels = days.map(function(d){ return formatDateShort(d.date); });
     var mid = days.map(function(d){ return d.displayTemp; });
     var low = days.map(function(d){ return d.rangeLow; });
@@ -581,9 +593,8 @@
             label:'Range high',
             data:high,
             borderColor:'transparent',
-            backgroundColor:'rgba(139,127,214,0.16)',
             pointRadius:0,
-            fill:'+1',
+            fill:false,
             tension:0.3,
             order:3
           },
@@ -591,9 +602,9 @@
             label:'Range low',
             data:low,
             borderColor:'transparent',
-            backgroundColor:'rgba(139,127,214,0.16)',
+            backgroundColor:'rgba(139,127,214,0.22)',
             pointRadius:0,
-            fill:false,
+            fill:0,
             tension:0.3,
             order:3
           },

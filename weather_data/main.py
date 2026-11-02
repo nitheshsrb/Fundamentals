@@ -29,7 +29,7 @@ train_baseline_pipeline(df)
 
 results = evaluation(df)
 results,beta0,beta1,bin_edges = optimization(results)
-print("Successfully applied optimization")
+print("Successfully obtained optimization")
 predictions = predict(14,results,bin_edges,beta0,beta1)
 
 if os.path.exists('weather_data/data/Historic_predictions.csv'):

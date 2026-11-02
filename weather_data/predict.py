@@ -22,15 +22,34 @@ def predict(days,Results,bin_edges,beta0,beta1):
     
     forecast_df = feature_engineering(forecast_df)
 
-    prediction_data = forecast_df[selected_features]
+    prediction_data = forecast_df[selected_features].reset_index(drop=True)
 
-    print("Data for prediction : ",prediction_data.head(5))
+    print("Data for prediction : ",prediction_data)
 
     std_dev_df = Results.groupby('Binned Actuals')['Residual'].std().reset_index()
 
-    results = model.predict(prediction_data)
+    delta_df = pd.read_csv('weather_data/data/Delta_load.csv')
 
-    prediction_data['Predictions'] = results.reset_index(drop=True).round()
+    last_known_lag = delta_df['temperature_2m_max'].iloc[-1].astype('float')
+
+    prediction_data['max_temp_lag1'] = prediction_data['max_temp_lag1'].astype('float64')
+
+    predictions = []
+
+    for i in range(days+1):
+
+        prediction_data.loc[i,'max_temp_lag1'] = last_known_lag
+
+        row = prediction_data.loc[[i]]
+        y = model.predict(row).iloc[0]
+
+        predictions.append(y)
+        
+        last_known_lag = y 
+
+    print(len(predictions), len(prediction_data))
+
+    prediction_data['Predictions'] = predictions
 
     prediction_data['Optimized Predictions'] = prediction_data['Predictions'] + (beta0 + (beta1*Results['Predictions']))
 

@@ -13,10 +13,26 @@ def evaluation(df):
         X_test[c] = X_test[c].astype('float')
 
     y_test = pd.to_numeric(y_test,errors='coerce')
-    y_pred = model.predict(X_test)
+    X_test = X_test.reset_index(drop = True)
 
-    print(y_test,y_pred)
+    last_known_lag = y_train.iloc[-1].astype('float')
 
+    y_pred = []
+
+    print(X_test.index.min(), X_test.index.max())
+    print('\n', X_test.loc[[X_test.index.min()]])
+    print('\n', X_test.loc[[X_test.index.max()]])
+
+    for i in range(len(X_test)):
+        #print('Current iteration is : \n',i)
+        X_test.loc[i,'max_temp_lag1'] = last_known_lag
+        pred = model.predict(X_test.loc[[i]]).iloc[0]
+        #print('Prediction is : \n', pred)
+        y_pred.append(pred)
+        last_known_lag = pred
+
+    print(y_test,'\n','Y PRED is :', y_pred)
+  
     dates_df = df
     dates_df['date'] = pd.to_datetime(dates_df['date'],format = '%Y-%m-%d')
 
@@ -26,12 +42,12 @@ def evaluation(df):
     print(dates_df.head(5))
 
     dates_df_shrunk = pd.DataFrame(dates_df['date'][dates_df['date'] >= cutoff_date]).reset_index()
-    print(dates_df_shrunk.head())
+    print(len(dates_df_shrunk))
 
     Results = pd.DataFrame()
     Results['date'] = dates_df_shrunk['date']
     Results['Actuals'] = y_test.reset_index(drop=True)
-    Results['Predictions'] = y_pred.reset_index(drop=True)
+    Results['Predictions'] = y_pred
 
 
     print("The number of generated predictions are", len(y_pred))
@@ -43,7 +59,8 @@ def evaluation(df):
     return Results
 
 
-
+#fake_df = pd.read_csv('weather_data/data/Feature_engineered_data.csv')
+#evaluation(fake_df)
     
 
 
